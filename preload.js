@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Stats
     getStats: () => ipcRenderer.invoke('get-stats'),
     onStatsUpdate: (callback) => ipcRenderer.on('stats-update', (event, stats) => callback(stats)),
+    saveActivityData: (data) => ipcRenderer.invoke('save-activity-data', data),
 
     // Schedules
     getSchedules: () => ipcRenderer.invoke('get-schedules'),
@@ -21,5 +22,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Blocked Sites
     getBlockedSites: () => ipcRenderer.invoke('get-blocked-sites'),
     addBlockedSite: (site) => ipcRenderer.invoke('add-blocked-site', site),
-    removeBlockedSite: (site) => ipcRenderer.invoke('remove-blocked-site', site)
+    removeBlockedSite: (site) => ipcRenderer.invoke('remove-blocked-site', site),
+
+    // Data management
+    exportData: () => ipcRenderer.invoke('export-data'),
+    importData: () => ipcRenderer.invoke('import-data'),
+    clearAppData: () => ipcRenderer.invoke('clear-app-data')
 });

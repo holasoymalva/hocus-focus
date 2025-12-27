@@ -9,6 +9,7 @@ let currentStats = { totalTimeSaved: 0, sessionsBlocked: 0, sitesBlocked: 0 };
 document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();
     setupEventListeners();
+    setupDashboard(); // Initialize dashboard graph
     await loadInitialData();
     setupIPCListeners();
 });
@@ -82,11 +83,48 @@ function setupEventListeners() {
         stopTimerCountdown();
     });
 
+    // Close detail modal
+    document.getElementById('close-detail-modal').addEventListener('click', () => {
+        document.getElementById('detail-modal').classList.remove('active');
+    });
+
+    document.getElementById('ok-detail').addEventListener('click', () => {
+        document.getElementById('detail-modal').classList.remove('active');
+    });
+
     // Grant admin access
     document.getElementById('grant-admin').addEventListener('click', async () => {
         const result = await window.electronAPI.toggleBlocking();
         if (result.success) {
-            alert('Admin access granted successfully!');
+            alert('¡Acceso de administrador concedido con éxito!');
+        }
+    });
+
+    // Data management
+    document.getElementById('export-data').addEventListener('click', async () => {
+        const result = await window.electronAPI.exportData();
+        if (result.success) {
+            alert('Datos exportados con éxito');
+        }
+    });
+
+    document.getElementById('import-data').addEventListener('click', async () => {
+        const result = await window.electronAPI.importData();
+        if (result.success) {
+            alert('Datos importados con éxito');
+            await loadInitialData();
+        } else if (result.message) {
+            alert(result.message);
+        }
+    });
+
+    document.getElementById('clear-app-data').addEventListener('click', async () => {
+        if (confirm('¿Estás seguro de que quieres eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+            const result = await window.electronAPI.clearAppData();
+            if (result.success) {
+                alert('Todos los datos han sido eliminados');
+                await loadInitialData();
+            }
         }
     });
 }
@@ -133,16 +171,16 @@ function updateBlockingStatus(active) {
 
     if (active) {
         sidebarStatus.classList.add('active');
-        sidebarStatus.querySelector('span:last-child').textContent = 'Active';
+        sidebarStatus.querySelector('span:last-child').textContent = 'Activo';
         blockingToggle.classList.add('active');
-        toggleTitle.textContent = 'Blocking Active';
-        toggleSubtitle.textContent = 'Tap to disable';
+        toggleTitle.textContent = 'Bloqueo Activo';
+        toggleSubtitle.textContent = 'Toca para desactivar';
     } else {
         sidebarStatus.classList.remove('active');
-        sidebarStatus.querySelector('span:last-child').textContent = 'Inactive';
+        sidebarStatus.querySelector('span:last-child').textContent = 'Inactivo';
         blockingToggle.classList.remove('active');
-        toggleTitle.textContent = 'Blocking Inactive';
-        toggleSubtitle.textContent = 'Tap to enable';
+        toggleTitle.textContent = 'Bloqueo Inactivo';
+        toggleSubtitle.textContent = 'Toca para activar';
     }
 }
 
@@ -184,6 +222,35 @@ function updateTimerDisplay() {
     }
 }
 
+// Activity Detail Modal
+function showDetailModal(label, value, periodType) {
+    const modal = document.getElementById('detail-modal');
+    const title = document.getElementById('detail-title');
+    const timeVal = document.getElementById('detail-time-saved');
+    const status = document.getElementById('detail-status');
+    const desc = document.getElementById('detail-description');
+
+    title.textContent = `Actividad: ${label}`;
+    timeVal.textContent = value;
+
+    // Status based on value
+    const numericValue = parseFloat(value);
+    if (numericValue > 4 || (periodType === 'Hoy' && numericValue > 45)) {
+        status.textContent = 'Altamente Enfocado';
+        status.style.color = 'var(--accent-success)';
+    } else if (numericValue > 0) {
+        status.textContent = 'Productivo';
+        status.style.color = 'var(--accent-primary)';
+    } else {
+        status.textContent = 'Sin Actividad';
+        status.style.color = 'var(--text-tertiary)';
+    }
+
+    desc.textContent = `Durante este período de ${periodType}, recuperaste con éxito ${value} de tiempo de enfoque bloqueando distracciones. ¡Sigue así!`;
+
+    modal.classList.add('active');
+}
+
 // Update stats
 function updateStats(stats) {
     currentStats = stats;
@@ -209,7 +276,7 @@ async function saveSchedule() {
     const days = Array.from(dayCheckboxes).map(cb => parseInt(cb.value));
 
     if (days.length === 0) {
-        alert('Please select at least one day');
+        alert('Por favor, selecciona al menos un día');
         return;
     }
 
@@ -236,11 +303,11 @@ function renderSchedules(schedules) {
     const container = document.getElementById('schedules-list');
 
     if (schedules.length === 0) {
-        container.innerHTML = '<p class="empty-state">No schedules configured yet</p>';
+        container.innerHTML = '<p class="empty-state">No hay horarios configurados aún</p>';
         return;
     }
 
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
     container.innerHTML = schedules.map(schedule => `
     <div class="schedule-item">
@@ -298,7 +365,7 @@ async function toggleSchedule(scheduleId, enabled) {
 }
 
 async function deleteSchedule(scheduleId) {
-    if (confirm('Are you sure you want to delete this schedule?')) {
+    if (confirm('¿Estás seguro de que quieres eliminar este horario?')) {
         await window.electronAPI.deleteSchedule(scheduleId);
         const schedules = await window.electronAPI.getSchedules();
         renderSchedules(schedules);
@@ -307,7 +374,7 @@ async function deleteSchedule(scheduleId) {
 
 function editSchedule(scheduleId) {
     // TODO: Implement edit functionality
-    alert('Edit functionality coming soon!');
+    alert('¡Funcionalidad de edición próximamente!');
 }
 
 // Sites
@@ -316,7 +383,7 @@ async function addSite() {
     const url = input.value.trim();
 
     if (!url) {
-        alert('Please enter a valid URL');
+        alert('Por favor, introduce una URL válida');
         return;
     }
 
@@ -336,7 +403,7 @@ function renderSites(sites) {
     const container = document.getElementById('sites-list');
 
     if (sites.length === 0) {
-        container.innerHTML = '<p class="empty-state">No sites blocked yet</p>';
+        container.innerHTML = '<p class="empty-state">No hay sitios bloqueados aún</p>';
         return;
     }
 
@@ -377,7 +444,7 @@ function filterSites(query) {
 }
 
 async function removeSite(site) {
-    if (confirm(`Remove ${site} from blocklist?`)) {
+    if (confirm(`¿Eliminar ${site} de la lista de bloqueo?`)) {
         await window.electronAPI.removeBlockedSite(site);
         const sites = await window.electronAPI.getBlockedSites();
         renderSites(sites);
@@ -415,3 +482,191 @@ window.deleteSchedule = deleteSchedule;
 window.editSchedule = editSchedule;
 window.removeSite = removeSite;
 window.quickAddSite = quickAddSite;
+
+// Dashboard Graph Logic - Annual Contribution Graph
+let activityData = {};
+
+function setupDashboard() {
+    // Load activity data and render
+    loadActivityData();
+}
+
+async function loadActivityData() {
+    const stats = await window.electronAPI.getStats();
+    activityData = stats.activityData || {};
+    renderAnnualGraph();
+}
+
+function renderAnnualGraph() {
+    const container = document.getElementById('contribution-graph');
+    container.className = 'contribution-graph annual-view';
+    container.innerHTML = '';
+
+    // Generate 52 weeks of data (last 365 days)
+    const today = new Date();
+    const oneYearAgo = new Date(today);
+    oneYearAgo.setDate(today.getDate() - 364); // 365 days including today
+
+    // Adjust to start from Sunday
+    const startDay = new Date(oneYearAgo);
+    startDay.setDate(startDay.getDate() - startDay.getDay());
+
+    // Generate month labels
+    const monthLabels = document.createElement('div');
+    monthLabels.className = 'month-labels';
+
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    let currentMonth = startDay.getMonth();
+    let weekCount = 0;
+
+    for (let week = 0; week < 53; week++) {
+        const weekDate = new Date(startDay);
+        weekDate.setDate(weekDate.getDate() + (week * 7));
+        const month = weekDate.getMonth();
+
+        if (month !== currentMonth || week === 0) {
+            const label = document.createElement('span');
+            label.className = 'month-label';
+            label.textContent = months[month];
+            label.style.gridColumn = week + 1;
+            monthLabels.appendChild(label);
+            currentMonth = month;
+        }
+    }
+    container.appendChild(monthLabels);
+
+    // Generate grid container
+    const grid = document.createElement('div');
+    grid.className = 'contribution-grid';
+
+    // Generate day labels
+    const dayLabels = document.createElement('div');
+    dayLabels.className = 'day-labels';
+    const dayNames = ['Lun', 'Mié', 'Vie'];
+    [1, 3, 5].forEach((day, index) => {
+        const label = document.createElement('span');
+        label.className = 'day-label';
+        label.textContent = dayNames[index];
+        label.style.gridRow = day + 1;
+        dayLabels.appendChild(label);
+    });
+    grid.appendChild(dayLabels);
+
+    // Generate cells (7 rows x 53 columns)
+    for (let week = 0; week < 53; week++) {
+        for (let day = 0; day < 7; day++) {
+            const currentDate = new Date(startDay);
+            currentDate.setDate(currentDate.getDate() + (week * 7) + day);
+
+            // Only show cells within the year range
+            if (currentDate <= today) {
+                const dateKey = formatDateKey(currentDate);
+                const minutesSaved = activityData[dateKey] || 0;
+                const level = getActivityLevel(minutesSaved);
+
+                const cell = createAnnualCell(currentDate, minutesSaved, level);
+                cell.style.gridColumn = week + 1;
+                cell.style.gridRow = day + 1;
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    container.appendChild(grid);
+}
+
+function createAnnualCell(date, minutes, level) {
+    const cell = document.createElement('div');
+    cell.className = `contribution-cell level-${level}`;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'cell-tooltip';
+
+    const dateStr = formatDateDisplay(date);
+    const hours = (minutes / 60).toFixed(1);
+    tooltip.textContent = minutes > 0
+        ? `${dateStr}: ${hours} horas recuperadas`
+        : `${dateStr}: Sin actividad`;
+
+    cell.appendChild(tooltip);
+
+    cell.addEventListener('click', () => {
+        showAnnualDetailModal(date, minutes);
+    });
+
+    return cell;
+}
+
+function getActivityLevel(minutes) {
+    // Convert minutes to levels (0-4)
+    // 0: no activity
+    // 1: 1-30 min
+    // 2: 31-60 min
+    // 3: 61-120 min
+    // 4: 120+ min
+    if (minutes === 0) return 0;
+    if (minutes <= 30) return 1;
+    if (minutes <= 60) return 2;
+    if (minutes <= 120) return 3;
+    return 4;
+}
+
+function formatDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatDateDisplay(date) {
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function showAnnualDetailModal(date, minutes) {
+    const modal = document.getElementById('detail-modal');
+    const title = document.getElementById('detail-title');
+    const timeVal = document.getElementById('detail-time-saved');
+    const status = document.getElementById('detail-status');
+    const desc = document.getElementById('detail-description');
+
+    const dateStr = formatDateDisplay(date);
+    const hours = (minutes / 60).toFixed(1);
+
+    title.textContent = `Actividad: ${dateStr}`;
+    timeVal.textContent = `${hours} horas`;
+
+    if (minutes > 120) {
+        status.textContent = 'Altamente Enfocado';
+        status.style.color = 'var(--accent-primary)';
+    } else if (minutes > 60) {
+        status.textContent = 'Muy Productivo';
+        status.style.color = 'var(--accent-purple)';
+    } else if (minutes > 0) {
+        status.textContent = 'Productivo';
+        status.style.color = 'var(--accent-secondary)';
+    } else {
+        status.textContent = 'Sin Actividad';
+        status.style.color = 'var(--text-tertiary)';
+    }
+
+    desc.textContent = minutes > 0
+        ? `En esta fecha, recuperaste ${hours} horas de tiempo de enfoque bloqueando distracciones. ¡Sigue así!`
+        : 'No hubo actividad registrada en esta fecha.';
+
+    modal.classList.add('active');
+}
+
+// Function to add activity (called when blocking ends)
+async function recordActivity(minutes) {
+    const today = new Date();
+    const dateKey = formatDateKey(today);
+
+    activityData[dateKey] = (activityData[dateKey] || 0) + minutes;
+
+    // Save to backend
+    await window.electronAPI.saveActivityData(activityData);
+
+    // Re-render graph
+    renderAnnualGraph();
+}

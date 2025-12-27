@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const sudo = require('sudo-prompt');
@@ -12,7 +12,8 @@ let stats = {
     totalTimeSaved: 0,
     sessionsBlocked: 0,
     sitesBlocked: 0,
-    lastSession: null
+    lastSession: null,
+    activityData: {}
 };
 
 // Rutas importantes
@@ -22,7 +23,7 @@ const configPath = path.join(app.getPath('userData'), 'config.json');
 const statsPath = path.join(app.getPath('userData'), 'stats.json');
 
 // Lista de sitios a bloquear
-const blockedSites = [
+let blockedSites = [
     'facebook.com',
     'www.facebook.com',
     'twitter.com',
@@ -186,7 +187,7 @@ function deactivateBlocking() {
 // Iniciar timer de desactivación
 function startDeactivationTimer() {
     if (deactivationTimer) {
-        return { success: false, message: 'Timer already running' };
+        return { success: false, message: 'El temporizador ya está activo' };
     }
 
     const duration = 15 * 60 * 1000; // 15 minutos
@@ -204,7 +205,7 @@ function cancelDeactivationTimer() {
         deactivationTimer = null;
         return { success: true };
     }
-    return { success: false, message: 'No timer running' };
+    return { success: false, message: 'No hay ningún temporizador activo' };
 }
 
 // Verificar horarios
@@ -242,12 +243,12 @@ function updateTray() {
 
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: blockingActive ? '🔒 Blocking Active' : '🔓 Blocking Inactive',
+            label: blockingActive ? '🔒 Bloqueo Activo' : '🔓 Bloqueo Inactivo',
             enabled: false
         },
         { type: 'separator' },
         {
-            label: blockingActive ? 'Deactivate (15 min timer)' : 'Activate Blocking',
+            label: blockingActive ? 'Desactivar (Timer 15 min)' : 'Activar Bloqueo',
             click: () => {
                 if (blockingActive) {
                     startDeactivationTimer();
@@ -261,7 +262,7 @@ function updateTray() {
         },
         { type: 'separator' },
         {
-            label: 'Show Window',
+            label: 'Mostrar Ventana',
             click: () => {
                 if (mainWindow) {
                     mainWindow.show();
@@ -269,7 +270,7 @@ function updateTray() {
             }
         },
         {
-            label: 'Quit',
+            label: 'Salir',
             click: () => {
                 app.quit();
             }
@@ -277,7 +278,7 @@ function updateTray() {
     ]);
 
     tray.setContextMenu(contextMenu);
-    tray.setToolTip(blockingActive ? 'Hocus Focus - Active' : 'Hocus Focus - Inactive');
+    tray.setToolTip(blockingActive ? 'Hocus Focus - Activo' : 'Hocus Focus - Inactivo');
 }
 
 function createWindow() {
@@ -357,6 +358,12 @@ ipcMain.handle('get-stats', () => {
     return stats;
 });
 
+ipcMain.handle('save-activity-data', (event, activityData) => {
+    stats.activityData = activityData;
+    saveData();
+    return { success: true };
+});
+
 ipcMain.handle('get-schedules', () => {
     return schedules;
 });
@@ -395,7 +402,7 @@ ipcMain.handle('add-blocked-site', (event, site) => {
         }
         return { success: true };
     }
-    return { success: false, message: 'Site already in list' };
+    return { success: false, message: 'El sitio ya está en la lista' };
 });
 
 ipcMain.handle('remove-blocked-site', (event, site) => {
@@ -407,5 +414,80 @@ ipcMain.handle('remove-blocked-site', (event, site) => {
         }
         return { success: true };
     }
-    return { success: false, message: 'Site not found' };
+    return { success: false, message: 'Sitio no encontrado' };
 });
+
+ipcMain.handle('export-data', async () => {
+    const data = {
+        schedules,
+        blockedSites,
+        stats,
+        exportDate: new Date().toISOString()
+    };
+
+    const { filePath } = await dialog.showSaveDialog({
+        title: 'Exportar Datos de Hocus Focus',
+        defaultPath: path.join(app.getPath('downloads'), 'hocus-focus-data.json'),
+        filters: [{ name: 'JSON', extensions: ['json'] }]
+    });
+
+    if (filePath) {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        return { success: true };
+    }
+    return { success: false };
+});
+
+ipcMain.handle('import-data', async () => {
+    const { filePaths } = await dialog.showOpenDialog({
+        title: 'Importar Datos de Hocus Focus',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        properties: ['openFile']
+    });
+
+    if (filePaths && filePaths.length > 0) {
+        try {
+            const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
+            if (data.schedules) schedules = data.schedules;
+            if (data.blockedSites) {
+                blockedSites = data.blockedSites;
+            }
+            if (data.stats) stats = data.stats;
+
+            saveData();
+            if (mainWindow) {
+                mainWindow.webContents.send('stats-update', stats);
+            }
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: 'Error al importar archivo' };
+        }
+    }
+    return { success: false };
+});
+
+ipcMain.handle('clear-app-data', async () => {
+    schedules = [];
+    blockedSites = [
+        'facebook.com', 'www.facebook.com',
+        'twitter.com', 'www.twitter.com',
+        'x.com', 'www.x.com',
+        'instagram.com', 'www.instagram.com',
+        'tiktok.com', 'www.tiktok.com',
+        'youtube.com', 'www.youtube.com',
+        'reddit.com', 'www.reddit.com'
+    ];
+    stats = {
+        totalTimeSaved: 0,
+        sessionsBlocked: 0,
+        sitesBlocked: 0,
+        lastSession: null,
+        activityData: {}
+    };
+    saveData();
+    if (mainWindow) {
+        mainWindow.webContents.send('stats-update', stats);
+    }
+    return { success: true };
+});
+
