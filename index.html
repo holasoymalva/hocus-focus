@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hocus Focus - Stay Focused</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="Icon-App.png" alt="Hocus Focus">
+        <h1>Hocus Focus</h1>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-item" data-view="schedules">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Schedules</span>
+        </button>
+
+        <button class="nav-item" data-view="blocklist">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Blocklist</span>
+        </button>
+
+        <button class="nav-item" data-view="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M12 1v6m0 6v6m5.66-13.66l-4.24 4.24m-2.83 2.83l-4.24 4.24m16.97-1.41l-6-6m-6-6l-6 6m16.97 8.49l-6-6m-6-6l-6 6">
+            </path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-badge" id="sidebar-status">
+          <span class="status-dot"></span>
+          <span>Inactive</span>
+        </div>
+        <div class="next-session">
+          <div class="next-session-label">Next Session</div>
+          <div class="next-session-name" id="next-session-name">Working Session</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard View -->
+      <div class="view active" id="dashboard-view">
+        <header class="view-header">
+          <div>
+            <h2>Dashboard</h2>
+            <p class="subtitle">Your productivity insights</p>
+          </div>
+          <div class="period-selector">
+            <span class="period-label">Period</span>
+            <button class="period-btn">Today</button>
+            <button class="period-btn active">Week</button>
+            <button class="period-btn">Month</button>
+          </div>
+        </header>
+
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="time-recovered">0.0</div>
+              <div class="stat-label">Time Recovered</div>
+              <div class="stat-sublabel">Hours saved</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="sites-blocked">0</div>
+              <div class="stat-label">Sites Blocked</div>
+              <div class="stat-sublabel">Distractions prevented</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                <path d="M2 12a10 10 0 0 0 10 10V12H2z"></path>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="focus-sessions">0</div>
+              <div class="stat-label">Focus Sessions</div>
+              <div class="stat-sublabel">Completed</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3>Time Recovered Over Time</h3>
+          <div class="chart-placeholder">
+            <svg width="100%" height="300" viewBox="0 0 800 300">
+              <defs>
+                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.3" />
+                  <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0" />
+                </linearGradient>
+              </defs>
+              <path d="M 0 250 L 100 240 L 200 220 L 300 230 L 400 200 L 500 180 L 600 160 L 700 140 L 800 120"
+                stroke="#8b5cf6" stroke-width="3" fill="none" />
+              <path
+                d="M 0 250 L 100 240 L 200 220 L 300 230 L 400 200 L 500 180 L 600 160 L 700 140 L 800 120 L 800 300 L 0 300 Z"
+                fill="url(#chartGradient)" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedules View -->
+      <div class="view" id="schedules-view">
+        <header class="view-header">
+          <div>
+            <h2>Focus Schedules</h2>
+            <p class="subtitle">Define when to block distractions</p>
+          </div>
+          <button class="btn-primary" id="add-schedule">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Schedule
+          </button>
+        </header>
+
+        <div class="schedules-list" id="schedules-list">
+          <!-- Schedules will be rendered here -->
+        </div>
+      </div>
+
+      <!-- Blocklist View -->
+      <div class="view" id="blocklist-view">
+        <header class="view-header">
+          <div>
+            <h2>Blocklist</h2>
+            <p class="subtitle">Manage sites to block during focus time</p>
+          </div>
+          <button class="blocking-toggle" id="blocking-toggle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+              <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+            <div>
+              <div class="toggle-title">Blocking Inactive</div>
+              <div class="toggle-subtitle">Tap to enable</div>
+            </div>
+          </button>
+        </header>
+
+        <div class="blocklist-input">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <input type="text" id="site-input" placeholder="Enter website URL (e.g., facebook.com)">
+          <button class="btn-add" id="add-site-btn">Add</button>
+        </div>
+
+        <div class="search-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="search-sites" placeholder="Search blocked sites...">
+        </div>
+
+        <div class="sites-list" id="sites-list">
+          <!-- Sites will be rendered here -->
+        </div>
+
+        <div class="quick-add">
+          <h4>Quick Add</h4>
+          <div class="quick-add-buttons" id="quick-add-buttons">
+            <!-- Quick add buttons will be rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div class="view" id="settings-view">
+        <header class="view-header">
+          <div>
+            <h2>Settings</h2>
+            <p class="subtitle">Configure your preferences</p>
+          </div>
+        </header>
+
+        <div class="settings-section">
+          <h3>General</h3>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Launch at Login</div>
+              <div class="setting-description">Start Hocus Focus automatically when you log in</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="launch-at-login">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Show Notifications</div>
+              <div class="setting-description">Get notified when focus sessions start and end</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-notifications" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Strict Mode</div>
+              <div class="setting-description">Prevent disabling blocking during active sessions</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="strict-mode">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Blocking</h3>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Blocking Method</div>
+              <div class="setting-description">Uses system hosts file for reliable blocking</div>
+            </div>
+            <div class="status-check">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <button class="btn-admin" id="grant-admin">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Grant Admin Access
+          </button>
+        </div>
+
+        <div class="settings-section">
+          <h3>Timer Settings</h3>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Deactivation Timer</div>
+              <div class="setting-description">Time to wait before disabling blocking</div>
+            </div>
+            <select id="timer-duration" class="setting-select">
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+              <option value="15" selected>15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">60 minutes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Schedule Modal -->
+  <div class="modal" id="schedule-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Schedule</h3>
+        <button class="modal-close" id="close-schedule-modal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="schedule-form">
+          <div class="form-group">
+            <label>Schedule Name</label>
+            <input type="text" id="schedule-name" placeholder="e.g., Working Session" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Time</label>
+              <div class="time-input">
+                <input type="number" id="start-hour" min="0" max="23" placeholder="HH" required>
+                <span>:</span>
+                <input type="number" id="start-minute" min="0" max="59" placeholder="MM" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>End Time</label>
+              <div class="time-input">
+                <input type="number" id="end-hour" min="0" max="23" placeholder="HH" required>
+                <span>:</span>
+                <input type="number" id="end-minute" min="0" max="59" placeholder="MM" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Days</label>
+            <div class="days-selector">
+              <label class="day-checkbox">
+                <input type="checkbox" value="0">
+                <span>Sun</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="1">
+                <span>Mon</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="2">
+                <span>Tue</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="3">
+                <span>Wed</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="4">
+                <span>Thu</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="5">
+                <span>Fri</span>
+              </label>
+              <label class="day-checkbox">
+                <input type="checkbox" value="6">
+                <span>Sat</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="cancel-schedule">Cancel</button>
+            <button type="submit" class="btn-primary">Save Schedule</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer Modal -->
+  <div class="modal" id="timer-modal">
+    <div class="modal-content timer-modal-content">
+      <div class="timer-display">
+        <div class="timer-icon">⏱️</div>
+        <h3>Deactivation Timer Started</h3>
+        <p class="timer-description">Please wait for the timer to complete</p>
+        <div class="timer-countdown" id="timer-countdown">15:00</div>
+        <button class="btn-secondary" id="cancel-timer">Cancel Timer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+
+</html>

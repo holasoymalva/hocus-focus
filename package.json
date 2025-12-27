@@ -1,0 +1,78 @@
+{
+    "name": "hocus-focus",
+    "version": "1.0.0",
+    "description": "Aplicación de bloqueo de distracciones para macOS",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "dev": "electron . --dev",
+        "build": "electron-builder --mac",
+        "build:dmg": "electron-builder --mac dmg"
+    },
+    "keywords": [
+        "productivity",
+        "blocker",
+        "focus",
+        "macos"
+    ],
+    "author": "Hocus Focus",
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "^28.0.0",
+        "electron-builder": "^24.9.1"
+    },
+    "dependencies": {
+        "sudo-prompt": "^9.2.1"
+    },
+    "build": {
+        "appId": "com.hocusfocus.app",
+        "productName": "HocusFocus",
+        "files": [
+            "main.js",
+            "preload.js",
+            "renderer.js",
+            "index.html",
+            "styles.css",
+            "Icon-App.png",
+            "node_modules/**/*"
+        ],
+        "asarUnpack": [
+            "node_modules/sudo-prompt/**/*"
+        ],
+        "mac": {
+            "category": "public.app-category.productivity",
+            "icon": "Icon-App.png",
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ],
+            "identity": null
+        },
+        "dmg": {
+            "title": "Hocus Focus ${version}",
+            "icon": "Icon-App.png",
+            "background": null,
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 220
+                },
+                {
+                    "x": 410,
+                    "y": 220,
+                    "type": "link",
+                    "path": "/Applications"
+                }
+            ],
+            "window": {
+                "width": 540,
+                "height": 380
+            }
+        }
+    }
+}
