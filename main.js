@@ -309,6 +309,19 @@ function createWindow() {
     const iconPath = path.join(__dirname, 'Icon-App.png');
     const icon = nativeImage.createFromPath(iconPath);
     tray = new Tray(icon.resize({ width: 16, height: 16 }));
+
+    // Click en el tray icon para mostrar/ocultar ventana
+    tray.on('click', () => {
+        if (mainWindow) {
+            if (mainWindow.isVisible()) {
+                mainWindow.hide();
+            } else {
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        }
+    });
+
     updateTray();
 }
 
@@ -321,8 +334,14 @@ app.whenReady().then(() => {
     checkSchedules();
 
     app.on('activate', () => {
+        // En macOS, re-crear la ventana cuando se hace click en el icono del dock
+        // y no hay otras ventanas abiertas
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
+        } else if (mainWindow) {
+            // Si la ventana existe pero está oculta, mostrarla
+            mainWindow.show();
+            mainWindow.focus();
         }
     });
 });
